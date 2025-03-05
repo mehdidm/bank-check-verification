@@ -1,0 +1,29 @@
+# Core Libraries
+tensorflow==2.17.0
+opencv-python==4.7.0.72
+numpy==1.26.4  # Updated to a version with Python 3.12 wheels
+pandas==2.0.1
+
+# OCR and Text Processing
+easyocr==1.6.2
+pytesseract==0.3.10
+unidecode==0.5.0
+pdf2image==1.16.3
+
+# Machine Learning and NLP
+rapidfuzz==3.0.0
+scikit-learn==1.2.2
+
+# Annotation
+label-studio==1.8.2
+label-studio-ml==1.0.5
+
+# Utilities
+Pillow==9.5.0
+
+# Development and Debugging
+jupyter==1.0.0
+matplotlib==3.7.1
+
+# Additional Dependencies
+python-dotenv==1.0.0

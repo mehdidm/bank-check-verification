@@ -1,0 +1,49 @@
+{
+    "label_config": {
+        "images": [
+            {
+                "name": "image",
+                "type": "Image"
+            }
+        ],
+        "labels": [
+            {
+                "name": "amount_numeric",
+                "type": "TextArea",
+                "description": "Numeric amount on the check"
+            },
+            {
+                "name": "amount_letters",
+                "type": "TextArea",
+                "description": "Amount written in letters"
+            },
+            {
+                "name": "bank_name",
+                "type": "TextArea",
+                "description": "Name of the bank"
+            },
+            {
+                "name": "account_number",
+                "type": "TextArea",
+                "description": "Account number"
+            },
+            {
+                "name": "signature",
+                "type": "RectangleLabels",
+                "description": "Signature region"
+            }
+        ]
+    },
+    "annotation_guidelines": {
+        "general_rules": [
+            "Ensure clear and precise bounding boxes",
+            "Capture full text of each labeled region",
+            "Be consistent with annotation across similar check types"
+        ],
+        "quality_checks": [
+            "Verify amount consistency between numeric and letter forms",
+            "Confirm bank name and account number readability",
+            "Check signature region clarity"
+        ]
+    }
+}
