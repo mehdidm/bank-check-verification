@@ -1,0 +1,44 @@
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Debug files
+debug_*.jpg
+debug_*.png
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Large data files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+*.model
+*.weights
+*.pt
+*.pth
+
+# Logs
+*.log
+logs/
