@@ -1,0 +1,12 @@
+{
+    "routing_number": "",
+    "account_number": "",
+    "check_number": "",
+    "date": "",
+    "amount": "",
+    "payee": "rine Chay Fae \u2018Ord. \u2018 an} HEV AAT S12 Fee Fe A Ee oe Lene oe Ee oT Oat BALL SAT Ss MEENA ep\nECE \u00a5 SUL OAS Me rt Se eee in RENE coir ae Pee) ey fans peeecr ae ene\nBi aaneey Paveeiod Lees kio ube LascULy SOME: T aes SrRemE Rerun) cer RO ay Lhaeeioa tee aree ae Pa\nea BARRY Soe LE ITA aad TE es ES ee ey Ce Met Aon Yo0 2 tags o eat\nFi a a) Mee PRS ys OF RE Peet (PPC aCr te meet nN SIF PEN TY, ene Jy 0? BY 6 yr P79 enema ee iotiin gh germane Tart",
+    "written_amount": "",
+    "confidence": 20.0,
+    "image_path": "/home/mehdi/check_extractor/data/samples/biat.jpg",
+    "processed_date": "2025-03-08T12:42:21.962492"
+}

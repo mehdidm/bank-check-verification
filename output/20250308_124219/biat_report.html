@@ -1,0 +1,135 @@
+
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Check Extraction Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .container { max-width: 1200px; margin: 0 auto; }
+                .header { text-align: center; margin-bottom: 30px; }
+                .section { margin-bottom: 30px; }
+                .flex-container { display: flex; flex-wrap: wrap; gap: 20px; }
+                .image-card { border: 1px solid #ddd; padding: 10px; border-radius: 5px; flex: 1; min-width: 300px; }
+                .data-card { border: 1px solid #ddd; padding: 15px; border-radius: 5px; background-color: #f9f9f9; }
+                img { max-width: 100%; }
+                table { width: 100%; border-collapse: collapse; }
+                table, th, td { border: 1px solid #ddd; }
+                th, td { padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Check Extraction Report</h1>
+                    <p>Generated on: 2025-03-08 12:42:21</p>
+                </div>
+                
+                <div class="section">
+                    <h2>Original Check</h2>
+                    <img src="images/original.png" alt="Original Check">
+                </div>
+                
+                <div class="section">
+                    <h2>Extracted Regions</h2>
+                    <div class="flex-container">
+                        
+            <div class="image-card">
+                <h3>Micr Line</h3>
+                <img src="images/micr_line.png" alt="micr_line">
+            </div>
+            
+            <div class="image-card">
+                <h3>Amount Box</h3>
+                <img src="images/amount_box.png" alt="amount_box">
+            </div>
+            
+            <div class="image-card">
+                <h3>Payee Line</h3>
+                <img src="images/payee_line.png" alt="payee_line">
+            </div>
+            
+            <div class="image-card">
+                <h3>Date Line</h3>
+                <img src="images/date_line.png" alt="date_line">
+            </div>
+            
+            <div class="image-card">
+                <h3>Signature</h3>
+                <img src="images/signature.png" alt="signature">
+            </div>
+            
+            <div class="image-card">
+                <h3>Written Amount</h3>
+                <img src="images/written_amount.png" alt="written_amount">
+            </div>
+            
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2>OCR Results</h2>
+                    <table>
+                        <tr>
+                            <th>Region</th>
+                            <th>Recognized Text</th>
+                        </tr>
+                        
+            <tr>
+                <td>Micr Line</td>
+                <td></td>
+            </tr>
+            
+            <tr>
+                <td>Amount Box</td>
+                <td></td>
+            </tr>
+            
+            <tr>
+                <td>Payee Line</td>
+                <td>rine Chay Fae ‘Ord. ‘ an} HEV AAT S12 Fee Fe A Ee oe Lene oe Ee oT Oat BALL SAT Ss MEENA ep
+ECE ¥ SUL OAS Me rt Se eee in RENE coir ae Pee) ey fans peeecr ae ene
+Bi aaneey Paveeiod Lees kio ube LascULy SOME: T aes SrRemE Rerun) cer RO ay Lhaeeioa tee aree ae Pa
+ea BARRY Soe LE ITA aad TE es ES ee ey Ce Met Aon Yo0 2 tags o eat
+Fi a a) Mee PRS ys OF RE Peet (PPC aCr te meet nN SIF PEN TY, ene Jy 0? BY 6 yr P79 enema ee iotiin gh germane Tart</td>
+            </tr>
+            
+            <tr>
+                <td>Date Line</td>
+                <td></td>
+            </tr>
+            
+            <tr>
+                <td>Signature</td>
+                <td>UP a SA GR eM
+SURE a [pee Or eee eA bin EO Pe
+Dregs | eeere eves) A iS Ae eft BE
+Rgcagee ene TS (8 in
+abated hel ERROR be ORT eS oae
+ere (Se ee! AAS 2</td>
+            </tr>
+            
+            <tr>
+                <td>Written Amount</td>
+                <td>pga RNS ASS gg pe aD a de gee pea ee =e eS lonaturo(s) snes
+St et eons Titulalro du compte’ tad! 9 lis ea ‘PEE es cree
+ROH ee [eeiien pee eae gles dm aaeae rene eee poms a ENS ae 22 BD tet tea ee</td>
+            </tr>
+            
+                    </table>
+                </div>
+                
+                <div class="section">
+                    <h2>Extracted Data</h2>
+                    <div class="data-card">
+                        <dl><dt><strong>Account Number</strong></dt><dd></dd><dt><strong>Amount</strong></dt><dd></dd><dt><strong>Check Number</strong></dt><dd></dd><dt><strong>Confidence</strong></dt><dd>20.0</dd><dt><strong>Date</strong></dt><dd></dd><dt><strong>Payee</strong></dt><dd>rine Chay Fae ‘Ord. ‘ an} HEV AAT S12 Fee Fe A Ee oe Lene oe Ee oT Oat BALL SAT Ss MEENA ep
+ECE ¥ SUL OAS Me rt Se eee in RENE coir ae Pee) ey fans peeecr ae ene
+Bi aaneey Paveeiod Lees kio ube LascULy SOME: T aes SrRemE Rerun) cer RO ay Lhaeeioa tee aree ae Pa
+ea BARRY Soe LE ITA aad TE es ES ee ey Ce Met Aon Yo0 2 tags o eat
+Fi a a) Mee PRS ys OF RE Peet (PPC aCr te meet nN SIF PEN TY, ene Jy 0? BY 6 yr P79 enema ee iotiin gh germane Tart</dd><dt><strong>Routing Number</strong></dt><dd></dd><dt><strong>Written Amount</strong></dt><dd></dd></dl>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        
