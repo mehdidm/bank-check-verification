@@ -54,17 +54,17 @@ class ResultVisualizer:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
         
         return result
-    
+
     def visualize_extraction_results(self, original_image, regions, text_data, extracted_data):
         """
         Create comprehensive visualization of the extraction results.
-        
+
         Args:
             original_image (numpy.ndarray): Original check image.
             regions (dict): Dictionary of extracted region images.
             text_data (dict): Dictionary of OCR results for each region.
             extracted_data (dict): Dictionary of extracted structured data.
-            
+
         Returns:
             numpy.ndarray: Visualization image.
         """
@@ -73,16 +73,16 @@ class ResultVisualizer:
             original_rgb = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
         else:
             original_rgb = cv2.cvtColor(original_image, cv2.COLOR_GRAY2RGB)
-        
+
         # Create a figure with 3 rows and 3 columns
         fig = plt.figure(figsize=(15, 12))
-        
+
         # Plot original image
         ax = fig.add_subplot(3, 3, 1)
         ax.imshow(original_rgb)
         ax.set_title("Original Check")
         ax.axis('off')
-        
+
         # Plot key regions
         region_titles = {
             'micr_line': 'MICR Line',
@@ -92,84 +92,85 @@ class ResultVisualizer:
             'signature': 'Signature',
             'written_amount': 'Written Amount'
         }
-        
+
         region_positions = {
-            'micr_line': 2, 
+            'micr_line': 2,
             'amount_box': 3,
-            'payee_line': 4, 
+            'payee_line': 4,
             'date_line': 5,
-            'signature': 6, 
+            'signature': 6,
             'written_amount': 7
         }
-        
+
         for name, pos in region_positions.items():
             if name in regions:
                 region = regions[name]
                 ax = fig.add_subplot(3, 3, pos)
-                
+
                 if len(region.shape) == 3:
                     region_rgb = cv2.cvtColor(region, cv2.COLOR_BGR2RGB)
                     ax.imshow(region_rgb)
                 else:
                     ax.imshow(region, cmap='gray')
-                
+
                 title = region_titles.get(name, name)
                 ocr_text = text_data.get(name, "").strip()
                 if len(ocr_text) > 30:
                     ocr_text = ocr_text[:27] + "..."
-                    
+
                 ax.set_title(f"{title}\nOCR: {ocr_text}")
                 ax.axis('off')
-        
+
         # Plot extracted data summary
         ax = fig.add_subplot(3, 3, 8)
         ax.axis('off')
-        
+
         # Display extracted data
         summary_text = "Extracted Data:\n\n"
         for key, value in extracted_data.items():
             if key != "raw_text" and value:  # Skip empty values
                 summary_text += f"{key.replace('_', ' ').title()}: {value}\n"
-        
-        ax.text(0, 0.5, summary_text, fontsize=10, 
+
+        ax.text(0, 0.5, summary_text, fontsize=10,
                 verticalalignment='center', wrap=True)
-        
+
         # Add confidence score or processing summary
         ax = fig.add_subplot(3, 3, 9)
         ax.axis('off')
-        
+
         # Generate a simple confidence score based on data completeness
         required_fields = ['amount', 'date', 'payee', 'routing_number', 'account_number']
         complete_fields = sum(1 for field in required_fields if extracted_data.get(field))
         confidence = (complete_fields / len(required_fields)) * 100
-        
+
         confidence_text = f"Extraction Confidence: {confidence:.1f}%\n\n"
         confidence_text += "Missing Fields:\n"
-        
-        missing = [field.replace('_', ' ').title() for field in required_fields 
-                  if not extracted_data.get(field)]
-        
+
+        missing = [field.replace('_', ' ').title() for field in required_fields
+                   if not extracted_data.get(field)]
+
         if missing:
             for field in missing:
                 confidence_text += f"- {field}\n"
         else:
             confidence_text += "None - All required fields extracted!"
-        
-        ax.text(0, 0.5, confidence_text, fontsize=10, 
+
+        ax.text(0, 0.5, confidence_text, fontsize=10,
                 verticalalignment='center', wrap=True)
-        
+
         # Adjust layout and save
         plt.tight_layout()
-        
+
         # Convert figure to image
         fig.canvas.draw()
-        fig_image = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-        fig_image = fig_image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-        
+        fig_image = np.frombuffer(fig.canvas.buffer_rgba(), dtype=np.uint8)  # Use buffer_rgba()
+        fig_image = fig_image.reshape(fig.canvas.get_width_height()[::-1] + (4,))  # Reshape to (height, width, 4)
+        fig_image = fig_image[:, :, :3]  # Drop the alpha channel (RGBA -> RGB)
+
         plt.close(fig)
-        
+
         return fig_image
-    
+
     def save_visualization(self, visualization, filename="extraction_results.png"):
         """
         Save visualization to a file.
