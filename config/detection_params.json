@@ -1,0 +1,96 @@
+{
+  "default": {
+    "micr_line": {
+      "focus_area": {"y1": 0.7, "y2": 1.0, "x1": 0.0, "x2": 1.0},
+      "kernel_width_factor": 50,
+      "min_contour_area": 100
+    },
+    "amount_box": {
+      "focus_area": {"y1": 0.0, "y2": 0.4, "x1": 0.6, "x2": 1.0},
+      "min_area": 100,
+      "aspect_ratio_min": 2.0,
+      "aspect_ratio_max": 5.0
+    },
+    "payee_line": {
+      "focus_area": {"y1": 0.25, "y2": 0.5, "x1": 0.0, "x2": 0.8},
+      "kernel_width_factor": 30,
+      "min_line_length_factor": 0.33,
+      "max_line_gap": 20
+    },
+    "date_line": {
+      "focus_area": {"y1": 0.0, "y2": 0.2, "x1": 0.6, "x2": 1.0},
+      "kernel_width": 15,
+      "min_line_length_factor": 0.1,
+      "max_line_gap": 10
+    },
+    "signature": {
+      "focus_area": {"y1": 0.5, "y2": 0.8, "x1": 0.5, "x2": 1.0},
+      "padding": 10
+    },
+    "written_amount": {
+      "focus_area": {"y1": 0.35, "y2": 0.55, "x1": 0.1, "x2": 0.8},
+      "kernel_width_factor": 30,
+      "min_line_length_factor": 0.25,
+      "max_line_gap": 20
+    },
+    "ocr_settings": {
+      "contrast_ths": 0.2,
+      "text_threshold": 0.7,
+      "low_text": 0.4,
+      "width_ths": 0.8,
+      "mag_ratio": 2.0
+    },
+    "preprocessing": {
+      "adaptive_threshold": true,
+      "clahe": true,
+      "denoise": true
+    }
+  },
+  "zitouna_bank": {
+    "micr_line": {
+      "focus_area": {"y1": 0.75, "y2": 1.0, "x1": 0.0, "x2": 1.0},
+      "kernel_width_factor": 40,
+      "min_contour_area": 150
+    },
+    "amount_box": {
+      "focus_area": {"y1": 0.0, "y2": 0.35, "x1": 0.65, "x2": 1.0},
+      "min_area": 120,
+      "aspect_ratio_min": 2.5,
+      "aspect_ratio_max": 4.5
+    },
+    "payee_line": {
+      "focus_area": {"y1": 0.3, "y2": 0.45, "x1": 0.0, "x2": 0.75},
+      "kernel_width_factor": 25,
+      "min_line_length_factor": 0.4,
+      "max_line_gap": 15
+    },
+    "date_line": {
+      "focus_area": {"y1": 0.05, "y2": 0.15, "x1": 0.65, "x2": 0.95},
+      "kernel_width": 12,
+      "min_line_length_factor": 0.15,
+      "max_line_gap": 8
+    },
+    "signature": {
+      "focus_area": {"y1": 0.55, "y2": 0.75, "x1": 0.6, "x2": 0.95},
+      "padding": 15
+    },
+    "written_amount": {
+      "focus_area": {"y1": 0.4, "y2": 0.5, "x1": 0.15, "x2": 0.75},
+      "kernel_width_factor": 25,
+      "min_line_length_factor": 0.3,
+      "max_line_gap": 15
+    },
+    "ocr_settings": {
+      "contrast_ths": 0.2,
+      "text_threshold": 0.6,
+      "low_text": 0.3,
+      "width_ths": 0.7,
+      "mag_ratio": 2.5
+    },
+    "preprocessing": {
+      "adaptive_threshold": true,
+      "clahe": true,
+      "denoise": true
+    }
+  }
+}

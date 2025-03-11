@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import os
+import json
 
 class ImagePreprocessor:
     """
@@ -8,14 +10,34 @@ class ImagePreprocessor:
     and improving contrast for better text recognition.
     """
     
-    def __init__(self, configs=None):
+    def __init__(self, detection_params_path=None, check_type=None):
         """
         Initialize the image preprocessor.
         
         Args:
-            configs (dict, optional): Configuration parameters for preprocessing.
+            detection_params_path (str, optional): Path to detection parameters file.
+            check_type (str, optional): Type of check to use specific parameters.
         """
-        self.configs = configs or {}
+        self.check_type = check_type or "default"
+        
+        # Default preprocessing settings
+        self.preprocessing_settings = {
+            "adaptive_threshold": True,
+            "clahe": True,
+            "denoise": True
+        }
+        
+        # Load preprocessing settings from detection parameters if available
+        if detection_params_path and os.path.exists(detection_params_path):
+            try:
+                with open(detection_params_path, 'r') as f:
+                    params = json.load(f)
+                    
+                if self.check_type in params and "preprocessing" in params[self.check_type]:
+                    self.preprocessing_settings = params[self.check_type]["preprocessing"]
+                    print(f"Loaded preprocessing settings for check type: {self.check_type}")
+            except Exception as e:
+                print(f"Error loading preprocessing settings from detection parameters: {e}")
         
     def load_image(self, image_path):
         """
@@ -39,7 +61,9 @@ class ImagePreprocessor:
         Returns:
             numpy.ndarray: Grayscale image.
         """
-        return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        if len(image.shape) == 3:
+            return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        return image
     
     def apply_threshold(self, image, method='adaptive'):
         """
@@ -126,13 +150,13 @@ class ImagePreprocessor:
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         return clahe.apply(image)
     
-    def preprocess(self, image_path, deskew=True, denoise_strength=10, 
+    def preprocess(self, image_path_or_array, deskew=True, denoise_strength=10, 
                   threshold_method='adaptive', enhance=True):
         """
         Apply full preprocessing pipeline to an image.
         
         Args:
-            image_path (str): Path to the image file.
+            image_path_or_array (str or numpy.ndarray): Path to the image file or image array.
             deskew (bool): Whether to apply deskewing.
             denoise_strength (int): Strength of denoising.
             threshold_method (str): Method for thresholding.
@@ -141,26 +165,32 @@ class ImagePreprocessor:
         Returns:
             tuple: Original image and preprocessed image.
         """
-        # Load the image
-        original = self.load_image(image_path)
+        # Load the image if path is provided
+        if isinstance(image_path_or_array, str):
+            original = self.load_image(image_path_or_array)
+        else:
+            original = image_path_or_array.copy()
         
         # Convert to grayscale
         gray = self.to_grayscale(original)
         
-        # Enhance contrast if requested
-        if enhance:
-            gray = self.enhance_contrast(gray)
+        # Apply preprocessing based on settings
+        processed = gray.copy()
         
-        # Apply thresholding
-        binary = self.apply_threshold(gray, method=threshold_method)
+        # Enhance contrast if requested or in settings
+        if enhance and self.preprocessing_settings.get('clahe', True):
+            processed = self.enhance_contrast(processed)
         
-        # Denoise the image
-        denoised = self.denoise(binary, strength=denoise_strength)
+        # Apply thresholding if in settings
+        if self.preprocessing_settings.get('adaptive_threshold', True):
+            processed = self.apply_threshold(processed, method=threshold_method)
+        
+        # Denoise the image if requested or in settings
+        if denoise_strength > 0 and self.preprocessing_settings.get('denoise', True):
+            processed = self.denoise(processed, strength=denoise_strength)
         
         # Deskew if requested
         if deskew:
-            processed = self.deskew(denoised)
-        else:
-            processed = denoised
+            processed = self.deskew(processed)
             
         return original, processed

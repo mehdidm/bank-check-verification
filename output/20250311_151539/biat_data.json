@@ -1,0 +1,12 @@
+{
+    "routing_number": "",
+    "account_number": "",
+    "check_number": "",
+    "date": "",
+    "amount": "",
+    "payee": "Lae iene Mel. he es oC. eee el Pa Med eas, & Deen eee An Oe fe ee\nRe PETE D PRG a pl he SG SULT TA CUE RSE CORRE OY pean ee oe BION germ a eee OLED\nry (ATT a Pas tag Mp ON TES oh apn Oem He FATS ad ALR el beet rN pa aOR eR Laney\n60 BD Vhs g cate ME CUTS cette en gee tie Ea neg pp Tae Ceti Spa ey a Sete BH gh\nSe eA et ADEE f Seb tee, Cent Laven aR mares bial TTR a, een RISE CE eae Bee REN Des Sakae",
+    "written_amount": "",
+    "confidence": 20.0,
+    "image_path": "data/samples/biat.jpg",
+    "processed_date": "2025-03-11T15:15:42.183752"
+}

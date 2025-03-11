@@ -25,7 +25,7 @@ class CheckExtractor:
     Main class for the check data extraction pipeline.
     """
     
-    def __init__(self, config_dir=None, output_dir=None, use_transformer=False):
+    def __init__(self, config_dir=None, output_dir=None, use_transformer=False, detection_params_path=None, check_type=None):
         """
         Initialize the check extraction pipeline.
         
@@ -33,11 +33,17 @@ class CheckExtractor:
             config_dir (str, optional): Directory containing configuration files.
             output_dir (str, optional): Directory for output files.
             use_transformer (bool): Whether to use transformer-based OCR.
+            detection_params_path (str, optional): Path to detection parameters file.
+            check_type (str, optional): Type of check to use specific parameters.
         """
         # Set up configuration paths
         self.config_dir = config_dir or os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config')
         self.regions_config_path = os.path.join(self.config_dir, 'regions_config.json')
         self.patterns_config_path = os.path.join(self.config_dir, 'extraction_patterns.json')
+        
+        # Detection parameters
+        self.detection_params_path = detection_params_path or os.path.join(self.config_dir, 'detection_params.json')
+        self.check_type = check_type or "default"
         
         # Create output directory
         self.output_dir = output_dir or create_output_directory()
@@ -48,13 +54,24 @@ class CheckExtractor:
         
         # Initialize pipeline components
         self.logger.info("Initializing check extraction pipeline")
-        self.preprocessor = ImagePreprocessor()
-        self.region_detector = RegionDetector(config_path=self.regions_config_path)
-        self.text_recognizer = TextRecognizer(use_transformer=use_transformer)
+        self.preprocessor = ImagePreprocessor(
+            detection_params_path=self.detection_params_path,
+            check_type=self.check_type
+        )
+        self.region_detector = RegionDetector(
+            config_path=self.regions_config_path,
+            detection_params_path=self.detection_params_path,
+            check_type=self.check_type
+        )
+        self.text_recognizer = TextRecognizer(
+            use_transformer=use_transformer,
+            detection_params_path=self.detection_params_path,
+            check_type=self.check_type
+        )
         self.data_extractor = DataExtractor(patterns_config_path=self.patterns_config_path)
         self.visualizer = ResultVisualizer(output_dir=self.output_dir)
         
-    def process_check(self, image_path, preprocessing_params=None, region_method='fixed'):
+    def process_check(self, image_path, preprocessing_params=None, region_method='dynamic'):
         """
         Process a single check image.
         
@@ -164,7 +181,7 @@ class CheckExtractor:
             self.logger.error(f"Error processing check {image_path}: {e}", exc_info=True)
             return {'error': str(e)}
     
-    def batch_process(self, image_dir, preprocessing_params=None, region_method='fixed'):
+    def batch_process(self, image_dir, preprocessing_params=None, region_method='dynamic'):
         """
         Process multiple check images from a directory.
         
@@ -216,45 +233,40 @@ def main():
     """
     Command-line interface for the check extraction pipeline.
     """
-    parser = argparse.ArgumentParser(description='Check Data Extraction Tool')
-    
-    # Input arguments
-    input_group = parser.add_mutually_exclusive_group(required=True)
-    input_group.add_argument('--image', '-i', help='Path to single check image')
-    input_group.add_argument('--batch', '-b', help='Path to directory containing check images')
-    
-    # Configuration arguments
-    parser.add_argument('--config-dir', '-c', help='Path to configuration directory')
-    parser.add_argument('--output-dir', '-o', help='Path to output directory')
-    
-    # Processing options
-    parser.add_argument('--method', '-m', choices=['fixed', 'dynamic'], default='fixed',
-                        help='Region extraction method')
+    parser = argparse.ArgumentParser(description='Extract data from check images.')
+    parser.add_argument('--image', type=str, help='Path to a single check image')
+    parser.add_argument('--dir', type=str, help='Path to a directory of check images')
+    parser.add_argument('--output', type=str, help='Directory for output files')
+    parser.add_argument('--config', type=str, help='Directory containing configuration files')
+    parser.add_argument('--detection-params', type=str, help='Path to detection parameters file')
+    parser.add_argument('--check-type', type=str, default='default', help='Type of check to use specific parameters')
+    parser.add_argument('--method', type=str, choices=['fixed', 'dynamic'], default='dynamic',
+                       help='Method for region extraction')
+    parser.add_argument('--transformer', action='store_true', help='Use transformer-based OCR')
     parser.add_argument('--no-deskew', action='store_true', help='Disable deskewing')
-    parser.add_argument('--denoise', type=int, default=10, help='Denoising strength (0-30)')
-    parser.add_argument('--threshold', choices=['adaptive', 'otsu', 'binary'], 
-                        default='adaptive', help='Thresholding method')
-    parser.add_argument('--no-enhance', action='store_true', help='Disable contrast enhancement')
-    parser.add_argument('--use-transformer', action='store_true', 
-                        help='Use transformer-based OCR (requires additional dependencies)')
+    parser.add_argument('--no-denoise', action='store_true', help='Disable denoising')
+    parser.add_argument('--no-enhance', action='store_true', help='Disable image enhancement')
+    parser.add_argument('--threshold', type=str, choices=['adaptive', 'otsu', 'none'], 
+                       default='adaptive', help='Thresholding method')
     
-    # Parse arguments
     args = parser.parse_args()
+    
+    # Initialize the check extractor
+    extractor = CheckExtractor(
+        config_dir=args.config,
+        output_dir=args.output,
+        use_transformer=args.transformer,
+        detection_params_path=args.detection_params,
+        check_type=args.check_type
+    )
     
     # Set preprocessing parameters
     preprocessing_params = {
         'deskew': not args.no_deskew,
-        'denoise_strength': args.denoise,
+        'denoise_strength': 0 if args.no_denoise else 10,
         'threshold_method': args.threshold,
         'enhance': not args.no_enhance
     }
-    
-    # Initialize the extractor
-    extractor = CheckExtractor(
-        config_dir=args.config_dir,
-        output_dir=args.output_dir,
-        use_transformer=args.use_transformer
-    )
     
     # Process single image or batch
     if args.image:
@@ -275,9 +287,9 @@ def main():
             print(f"Report saved to: {result['report_path']}")
     else:
         # Process batch of images
-        print(f"Batch processing check images from: {args.batch}")
+        print(f"Batch processing check images from: {args.dir}")
         results = extractor.batch_process(
-            args.batch,
+            args.dir,
             preprocessing_params=preprocessing_params,
             region_method=args.method
         )
@@ -300,47 +312,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    """
-    Command-line interface for the check extraction pipeline.
-    """
-    parser = argparse.ArgumentParser(description='Check Data Extraction Tool')
-    
-    # Input arguments
-    input_group = parser.add_mutually_exclusive_group(required=True)
-    input_group.add_argument('--image', '-i', help='Path to single check image')
-    input_group.add_argument('--batch', '-b', help='Path to directory containing check images')
-    
-    # Configuration arguments
-    parser.add_argument('--config-dir', '-c', help='Path to configuration directory')
-    parser.add_argument('--output-dir', '-o', help='Path to output directory')
-    
-    # Processing options
-    parser.add_argument('--method', '-m', choices=['fixed', 'dynamic'], default='fixed',
-                        help='Region extraction method')
-    parser.add_argument('--no-deskew', action='store_true', help='Disable deskewing')
-    parser.add_argument('--denoise', type=int, default=10, help='Denoising strength (0-30)')
-    parser.add_argument('--threshold', choices=['adaptive', 'otsu', 'binary'], 
-                        default='adaptive', help='Thresholding method')
-    parser.add_argument('--no-enhance', action='store_true', help='Disable contrast enhancement')
-    parser.add_argument('--use-transformer', action='store_true', 
-                        help='Use transformer-based OCR (requires additional dependencies)')
-    
-    # Parse arguments
-    args = parser.parse_args()
-    
-    # Set preprocessing parameters
-    preprocessing_params = {
-        'deskew': not args.no_deskew,
-        'denoise_strength': args.denoise,
-        'threshold_method': args.threshold,
-        'enhance': not args.no_enhance
-    }
-    
-    # Initialize the extractor
-    extractor = CheckExtractor(
-        config_dir=args.config_dir,
-        output_dir=args.output_dir,
-        use_transformer=args.use_transformer
-    )
-    
-    #
