@@ -202,11 +202,128 @@ If regions are not being detected correctly:
      python -m src.main --image path/to/your/check.jpg --method fixed --output results
      ```
 
+## GUI Application
+
+The Check Extractor now includes a graphical user interface for easier interaction with the system. The GUI provides a user-friendly way to process checks without using command-line arguments.
+
+### Running the GUI
+
+```bash
+# Create and activate a virtual environment (recommended)
+python3 -m venv venv
+source venv/bin/activate
+
+# Install required dependencies
+pip install pillow opencv-python-headless pytesseract
+
+# Launch the GUI application
+python gui_app.py
+```
+
+### GUI Features
+
+- **Image Loading**: Browse and select individual check images for processing
+- **Batch Processing**: Process multiple check images from a directory
+- **Detection Method Selection**: Choose between dynamic and fixed region detection
+- **Check Type Selection**: Select from available check types defined in the configuration
+- **Preprocessing Options**: Configure image preprocessing settings
+- **Real-time Visualization**: View the original and processed check images
+- **Results Display**: See extracted data in a readable format
+- **PDF Report Generation**: Automatically create professional PDF reports with check images and extracted data
+
+### Using the GUI
+
+1. **Load an Image**: Click the "Browse" button next to "Check Image" to select a check image
+2. **Configure Settings**: Select the detection method, check type, and preprocessing options
+3. **Process Check**: Click the "Process Check" button to extract data from the loaded image
+4. **View Results**: The extracted data will be displayed in the "Extracted Data" section
+5. **Access PDF Reports**: PDF reports are automatically generated in the results/reports directory
+6. **Process Multiple Checks**: For batch processing, select a directory containing check images and click "Process Batch"
+
+### GUI Implementation Details
+
+The GUI is built using Tkinter, Python's standard GUI toolkit, and follows a modular design pattern:
+
+#### Architecture
+
+- **Main Application Class**: `CheckExtractorGUI` in `src/gui.py` handles all GUI interactions
+- **Thread-Safe Processing**: Long-running operations run in background threads to keep the UI responsive
+- **Event-Driven Design**: Uses Tkinter's event system for user interactions
+- **MVC Pattern**: Separates the UI (View) from the check processing logic (Model) with the GUI class acting as Controller
+
+#### Key Components
+
+1. **Left Panel**: Contains input fields and settings controls
+   - Image selection with file browser
+   - Batch directory selection
+   - Detection method radio buttons (Dynamic/Fixed)
+   - Check type dropdown (populated from detection_params.json)
+   - Preprocessing options (Deskew, Denoise, Enhance)
+   - Threshold method selection
+   - Action buttons (Process Check, Process Batch, Update Settings)
+
+2. **Right Panel**: Displays the check image with scroll functionality
+   - Automatically scales images to fit the view
+   - Supports panning with scrollbars
+   - Shows the original image or processed visualization
+
+3. **Bottom Panel**: Shows status and results
+   - Status bar for operation feedback
+   - Text area for displaying extracted check data
+
+#### Integration with Check Extractor
+
+The GUI integrates with the existing check extraction pipeline:
+
+1. **Configuration Loading**: Automatically loads available check types from detection_params.json
+2. **Parameter Passing**: Translates GUI settings into appropriate parameters for the CheckExtractor class
+3. **Result Handling**: Displays extracted data and visualizations from the processing pipeline
+4. **Error Management**: Catches and displays errors in a user-friendly way
+
+#### Asynchronous Processing
+
+To maintain UI responsiveness during processing:
+
+1. Check processing runs in separate threads
+2. A queue system passes results back to the main thread
+3. Periodic queue checking updates the UI with processing status and results
+4. Progress updates are shown in the status bar
+
+#### Customization
+
+The GUI respects all configuration options from the detection_params.json file:
+
+1. New check types added to the configuration automatically appear in the GUI dropdown
+2. OCR settings from the configuration are applied during processing
+3. Preprocessing parameters can be adjusted through the interface
+4. All command-line options are accessible through the GUI
+
+#### PDF Reports
+
+The GUI automatically generates comprehensive PDF reports for each processed check:
+
+1. **Individual Check Reports**: For each successfully processed check, a detailed PDF report is generated containing:
+   - Check image with detected regions highlighted
+   - All extracted data in a tabular format
+   - Confidence scores for OCR results
+   - Date and time of processing
+   - Filename and check type information
+
+2. **Batch Summary Reports**: When processing multiple checks, a summary PDF is also generated with:
+   - Overview of all processed checks
+   - Success/failure status for each check
+   - Links to individual check reports
+   - Processing timestamp and statistics
+
+3. **Report Location**: All PDF reports are saved in the `results/reports` directory with timestamps in the filename for easy identification
+
 ## Project Structure
 
 ```
 check_extractor/
+├── gui_app.py             # GUI application entry point
 ├── src/
+│   ├── gui.py             # GUI implementation
 │   ├── main.py            # Main entry point and CheckExtractor class
 │   ├── preprocessor.py    # Image preprocessing functionality
 │   ├── region_detector.py # Region detection (dynamic and fixed)
