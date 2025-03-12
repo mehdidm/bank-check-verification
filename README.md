@@ -79,6 +79,129 @@ python -m src.main --image data/checks/check1.jpg --method fixed --output result
 python -m src.main --image data/checks/zitouna_check.jpg --check-type zitouna_bank --output results
 ```
 
+## Dynamic Region Detection Guide
+
+### How to Use Dynamic Detection for Any Check
+
+The system is designed to automatically detect regions on any check without requiring predefined templates. Here's how to use it effectively:
+
+1. **Basic Usage with Default Settings**:
+   ```bash
+   python -m src.main --image path/to/your/check.jpg --method dynamic --output results
+   ```
+   This will apply the default detection parameters which are designed to work with most standard check formats.
+
+2. **For Specific Check Types**:
+   ```bash
+   python -m src.main --image path/to/your/check.jpg --check-type your_bank_name --output results
+   ```
+   This will use parameters optimized for your specific check type (if defined in the configuration).
+
+### Adding Support for a New Check Type
+
+If you have a new check type that requires specific detection parameters:
+
+1. **Create a new entry in the detection parameters file** (`config/detection_params.json`):
+   ```json
+   "your_bank_name": {
+     "micr_line": {
+       "focus_area": {"y1": 0.8, "y2": 1.0, "x1": 0.0, "x2": 1.0},
+       "kernel_width_factor": 45,
+       "min_contour_area": 120
+     },
+     "amount_box": {
+       "focus_area": {"y1": 0.0, "y2": 0.3, "x1": 0.7, "x2": 1.0},
+       "min_area": 110,
+       "aspect_ratio_min": 2.2,
+       "aspect_ratio_max": 4.8
+     },
+     "ocr_settings": {
+       "contrast_ths": 0.2,
+       "text_threshold": 0.7,
+       "low_text": 0.4,
+       "width_ths": 0.8,
+       "mag_ratio": 2.0
+     },
+     "preprocessing": {
+       "adaptive_threshold": true,
+       "clahe": true,
+       "denoise": true
+     }
+   }
+   ```
+
+2. **Run the extractor with your check type**:
+   ```bash
+   python -m src.main --image path/to/your/check.jpg --check-type your_bank_name --output results
+   ```
+
+### Tips for Improving Region Detection
+
+1. **Adjust Focus Areas**: 
+   - Each region has a `focus_area` parameter that defines where to look for that region
+   - Values are percentages of the image dimensions (0.0 to 1.0)
+   - For example, to look for the MICR line in the bottom 20% of the image:
+     ```json
+     "focus_area": {"y1": 0.8, "y2": 1.0, "x1": 0.0, "x2": 1.0}
+     ```
+
+2. **Tune Detection Parameters**:
+   - `kernel_width_factor`: Controls the size of morphological kernels for line detection
+   - `min_contour_area`: Minimum area for contours to be considered valid
+   - `aspect_ratio_min/max`: Range of valid aspect ratios for rectangular regions
+   - `min_line_length_factor`: Minimum length for lines as a factor of image width
+   - `max_line_gap`: Maximum gap between line segments to be connected
+
+3. **Optimize Preprocessing**:
+   - Adjust preprocessing parameters for better image quality:
+     ```json
+     "preprocessing": {
+       "adaptive_threshold": true,
+       "clahe": true,
+       "denoise": true
+     }
+     ```
+
+4. **Fine-tune OCR Settings**:
+   - Adjust OCR parameters for better text recognition:
+     ```json
+     "ocr_settings": {
+       "contrast_ths": 0.2,
+       "text_threshold": 0.6,
+       "low_text": 0.3,
+       "width_ths": 0.7,
+       "mag_ratio": 2.5
+     }
+     ```
+
+### Troubleshooting Region Detection
+
+If regions are not being detected correctly:
+
+1. **Check Image Quality**:
+   - Ensure the check image is clear, well-lit, and high-resolution
+   - Remove any background noise or shadows
+
+2. **Visualize Detection Results**:
+   - Examine the output visualization to see what regions were detected
+   - Look for patterns in missed regions
+
+3. **Adjust Focus Areas**:
+   - If a region is consistently missed, try expanding its focus area
+   - For example, if the date line is too high in the image:
+     ```json
+     "date_line": {
+       "focus_area": {"y1": 0.0, "y2": 0.25, "x1": 0.6, "x2": 1.0},
+       ...
+     }
+     ```
+
+4. **Fallback to Fixed Coordinates**:
+   - If dynamic detection consistently fails for a specific check type, you can use fixed coordinates as a fallback:
+     ```bash
+     python -m src.main --image path/to/your/check.jpg --method fixed --output results
+     ```
+
 ## Project Structure
 
 ```
