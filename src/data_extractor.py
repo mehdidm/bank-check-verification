@@ -1,11 +1,29 @@
 import re
 import json
 import os
+import cv2
+import numpy as np
+import pytesseract
+from typing import Dict, Optional, Tuple
 
 class DataExtractor:
     def __init__(self, patterns_config_path=None):
         self.patterns_config_path = patterns_config_path
         self.patterns = self._load_patterns() if patterns_config_path else self._default_patterns()
+
+        # Configure tesseract path - adjust this based on your installation
+        if os.name == 'nt':  # Windows
+            pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+        
+        # Define check regions (normalized coordinates)
+        self.regions = {
+            'date': (0.75, 0.05, 0.95, 0.15),      # (x1, y1, x2, y2) as percentages
+            'payee': (0.15, 0.20, 0.95, 0.30),
+            'amount_box': (0.75, 0.20, 0.95, 0.30),
+            'written_amount': (0.15, 0.30, 0.95, 0.40),
+            'signature': (0.65, 0.55, 0.95, 0.75),
+            'micr': (0.10, 0.90, 0.90, 0.98)
+        }
 
     def _load_patterns(self):
         try:
@@ -73,3 +91,85 @@ class DataExtractor:
             written_amount = re.sub(r'\s+', ' ', written_amount)
             return written_amount
         return ""
+
+    def process_check_image(self, image_path: str) -> Dict[str, str]:
+        """Process a check image and extract all relevant information."""
+        # Read and preprocess the image
+        image = cv2.imread(image_path)
+        if image is None:
+            raise ValueError(f"Could not read image at {image_path}")
+        
+        # Convert to grayscale
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        
+        # Extract data from each region
+        results = {}
+        results['date'] = self._extract_from_region(gray, 'date')
+        results['payee'] = self._extract_from_region(gray, 'payee')
+        results['amount'] = self._extract_from_region(gray, 'amount_box')
+        results['written_amount'] = self._extract_from_region(gray, 'written_amount')
+        results['micr_data'] = self._process_micr(gray)
+        
+        # Process extracted data using existing patterns
+        results['date'] = self.extract_date(results['date'])
+        results['payee'] = self.extract_payee(results['payee'])
+        results['amount'] = self.extract_amount(results['amount'])
+        results['written_amount'] = self.extract_written_amount(results['written_amount'])
+        
+        # Extract MICR components
+        micr_text = results['micr_data']
+        results['routing_number'] = self.extract_routing_number(micr_text)
+        results['account_number'] = self.extract_account_number(micr_text)
+        results['check_number'] = self.extract_check_number(micr_text)
+        
+        return results
+
+    def _extract_from_region(self, image: np.ndarray, region_name: str) -> str:
+        """Extract text from a specific region of the check."""
+        h, w = image.shape
+        x1, y1, x2, y2 = self.regions[region_name]
+        
+        # Convert normalized coordinates to pixel coordinates
+        x1, y1 = int(w * x1), int(h * y1)
+        x2, y2 = int(w * x2), int(h * y2)
+        
+        # Extract region
+        roi = image[y1:y2, x1:x2]
+        
+        # Apply region-specific preprocessing
+        if region_name == 'micr':
+            # MICR-specific preprocessing
+            roi = cv2.threshold(roi, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+        else:
+            # General preprocessing for other regions
+            roi = cv2.GaussianBlur(roi, (3, 3), 0)
+            roi = cv2.threshold(roi, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+        
+        # Perform OCR
+        config = '--psm 6'  # Assume uniform block of text
+        if region_name == 'amount_box':
+            config = '--psm 7 -c tessedit_char_whitelist=0123456789,.'
+        
+        text = pytesseract.image_to_string(roi, config=config).strip()
+        return text
+
+    def _process_micr(self, image: np.ndarray) -> str:
+        """Special processing for MICR line."""
+        h, w = image.shape
+        x1, y1, x2, y2 = self.regions['micr']
+        
+        # Convert normalized coordinates to pixel coordinates
+        x1, y1 = int(w * x1), int(h * y1)
+        x2, y2 = int(w * x2), int(h * y2)
+        
+        # Extract MICR region
+        micr_roi = image[y1:y2, x1:x2]
+        
+        # MICR-specific preprocessing
+        micr_roi = cv2.threshold(micr_roi, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+        
+        # Use tesseract with MICR configuration
+        config = '--psm 7 -c tessedit_char_whitelist=0123456789'
+        micr_text = pytesseract.image_to_string(micr_roi, config=config).strip()
+        
+        return micr_text
