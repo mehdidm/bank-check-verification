@@ -454,6 +454,27 @@ The system allows fine-tuning of detection parameters for specific check types t
 - **clahe**: Whether to apply CLAHE for contrast enhancement
 - **denoise**: Whether to apply denoising
 
+
+### Configuring the Region Detection Model
+
+The region detection model can be configured by modifying the `config/detection_params.json` file. The `model` parameter in the `default` section controls the selection of the region detection method.
+
+Users can choose between the following options:
+
+-   `dynamic`: Uses the dynamic region detection method based on computer vision techniques.
+-   `yolov5`: Uses the YOLOv5 object detection model.
+-   `yolov8`: Uses the YOLOv8 object detection model.
+-   `faster_rcnn`: Uses the Faster R-CNN object detection model.
+-   `efficientdet`: Uses the EfficientDet object detection model.
+
+**Example:**
+
+To use the YOLOv8 model, modify the `config/detection_params.json` file as follows:
+
+
+- **clahe**: Whether to apply CLAHE for contrast enhancement
+- **denoise**: Whether to apply denoising
+
 ## Advanced Usage
 
 ### Programmatic API

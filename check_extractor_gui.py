@@ -12,6 +12,7 @@ from fpdf import FPDF
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.main import CheckExtractor
+from src.model_evaluator import evaluate_models
 
 class CheckExtractorGUI:
     def __init__(self, root):
@@ -44,13 +45,25 @@ class CheckExtractorGUI:
         return ["default"]
 
     def _initialize_extractor(self):
+        detection_params_path = os.path.join(self.config_dir, "detection_params.json")
+        text_recognition_params = {}
+        try:
+            with open(detection_params_path, 'r') as f:
+                params = json.load(f)
+                text_recognition_params = params.get("text_recognition", {})
+        except Exception as e:
+            print(f"Error loading text recognition params: {e}")
+
         try:
             self.extractor = CheckExtractor(
                 config_dir=self.config_dir,
                 output_dir=self.output_dir,
-                detection_params_path=os.path.join(self.config_dir, "detection_params.json"),
-                check_type=self.check_type_var.get()
+                detection_params_path=detection_params_path,
+                check_type=self.check_type_var.get(),                
+                text_model=self.model_var.get().lower(),
+                text_language=self.language_var.get().lower()
             )
+
             self.status_var.set("Extractor initialized successfully.")
         except Exception as e:
             self.status_var.set(f"Error initializing extractor: {e}")
@@ -111,13 +124,22 @@ class CheckExtractorGUI:
         self.threshold_var = ctk.StringVar(value="adaptive")
         ctk.CTkOptionMenu(settings_frame, variable=self.threshold_var, values=["adaptive", "otsu", "none"]).pack(fill="x", padx=5, pady=2)
 
-        self.transformer_var = ctk.BooleanVar(value=False)
-        ctk.CTkCheckBox(settings_frame, text="Use Transformer OCR", variable=self.transformer_var).pack(anchor="w", padx=5, pady=2)
+        ctk.CTkLabel(settings_frame, text="Text Recognition Model:").pack(anchor="w", padx=5, pady=2)        
+        self.model_var = ctk.StringVar(value="tesseract")
+        self.model_options = ["Tesseract", "TrOCR", "CRNN", "Donut", "M4C", "GMR"]
+        ctk.CTkOptionMenu(settings_frame, variable=self.model_var, values=self.model_options).pack(fill="x", padx=5, pady=2)
+
+        ctk.CTkLabel(settings_frame, text="Language:").pack(anchor="w", padx=5, pady=2)
+        self.language_var = ctk.StringVar(value="English")
+        self.language_options = ["English", "French", "Arabic"]
+        ctk.CTkOptionMenu(settings_frame, variable=self.language_var, values=self.language_options).pack(fill="x", padx=5, pady=2)
 
         # Action Buttons
+        ctk.CTkButton(parent, text="Evaluate Models", command=self._evaluate_models).pack(fill="x", pady=5)
         ctk.CTkButton(parent, text="Process Check", command=self._process_check, fg_color="#1f77b4").pack(fill="x", pady=5)
         ctk.CTkButton(parent, text="Process Batch", command=self._process_batch, fg_color="#ff7f0e").pack(fill="x", pady=5)
         ctk.CTkButton(parent, text="Update Settings", command=self._update_settings, fg_color="#2ca02c").pack(fill="x", pady=5)
+        ctk.CTkButton(parent, text="Evaluate Models", command=self._evaluate_models).pack(fill="x", pady=5)
 
         self.status_var = ctk.StringVar(value="Ready")
         ctk.CTkLabel(parent, textvariable=self.status_var).pack(pady=10)
@@ -165,6 +187,31 @@ class CheckExtractorGUI:
         self._initialize_extractor()
         self.status_var.set("Settings updated successfully.")
 
+    def _evaluate_models(self):        
+        test_dir = filedialog.askdirectory(title="Select Test Image Directory")
+        if not test_dir:
+            messagebox.showwarning("Input Error", "Please select a valid test image directory.")
+            return
+
+        test_image_paths = [os.path.join(test_dir, f) for f in os.listdir(test_dir) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff'))]
+        if not test_image_paths:
+                self.queue.put(("error", "No image files found in the batch directory."))
+                return
+
+        region_detector_configs = [{"model": self.method_var.get()}] # Use currently selected region method.
+        text_recognizer_configs = [{"model": model.lower()} for model in self.model_options] # Evaluate all available text models.
+
+        self.status_var.set(f"Evaluating models...")
+
+        try:
+            results = evaluate_models(test_image_paths, region_detector_configs, text_recognizer_configs)
+            self.output_text.delete("0.0", "end")
+            self.output_text.insert("end", json.dumps(results, indent=4))
+            self.status_var.set(f"Evaluation completed.")
+        except Exception as e:
+            self.status_var.set(f"Evaluation error: {e}")
+            messagebox.showerror("Evaluation Error", str(e))
+
     def _process_check(self):
         image_path = self.image_path_var.get()
         if not image_path or not os.path.exists(image_path):
@@ -184,8 +231,10 @@ class CheckExtractorGUI:
             result = self.extractor.process_check(
                 image_path,
                 preprocessing_params=preprocessing_params,
-                region_method=self.method_var.get()
-            )
+                region_method=self.method_var.get(),
+                model=self.model_var.get().lower(),  
+                language=self.language_var.get().lower()  
+                )
             self.queue.put(("success", result))
         except Exception as e:
             self.queue.put(("error", str(e)))
@@ -214,7 +263,13 @@ class CheckExtractorGUI:
             results = []
             for i, image_path in enumerate(image_files):
                 self.queue.put(("status", f"Processing image {i+1}/{len(image_files)}: {os.path.basename(image_path)}"))
-                result = self.extractor.process_check(image_path, preprocessing_params, self.method_var.get())
+                result = self.extractor.process_check(
+                    image_path, 
+                    preprocessing_params, 
+                    self.method_var.get(),
+                    model=self.model_var.get().lower(),  
+
+                    language=self.language_var.get().lower())
                 results.append((image_path, result))
             self.queue.put(("batch_success", results))
         except Exception as e:
