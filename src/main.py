@@ -186,7 +186,7 @@ class CheckExtractor:
             }
             
         except Exception as e:
-                self.logger.error(f"Error processing check {image_path}: {e}", exc_info=True)
+            self.logger.error(f"Error processing check {image_path}: {e}", exc_info=True)
             return {'error': str(e)}
     
     def batch_process(self, image_dir, preprocessing_params=None, region_method='dynamic'):
