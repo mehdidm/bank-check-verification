@@ -247,7 +247,8 @@ class RegionDetector:
     def detect(self, image):
         if self.model_type == "hybrid":
             return self._compare_and_combine(self._run_yolo_model(self.yolo_model, image), self._run_faster_rcnn_model(self.faster_rcnn_model, image))
-        elif self.model_type == "faster_rcnn":
+        elif self.model_type == "faster_rcnn":            
+            return self._run_faster_rcnn_model(self.faster_rcnn_model, image)
     def _detect_contours(self, image):
         blurred = cv2.GaussianBlur(image, (5, 5), 0)
         edges = cv2.Canny(blurred, 50, 150)
@@ -353,5 +354,5 @@ class RegionDetector:
                     regions[name] = image[y1:y2, x1:x2]
 
         return regions
-        else:
-            return self._run_faster_rcnn_model(self.faster_rcnn_model, image)
+       
+
