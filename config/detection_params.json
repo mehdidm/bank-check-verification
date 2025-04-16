@@ -1,16 +1,13 @@
 {
   "default": {
-    "text_recognition": {
-    }
+    "text_recognition": {}
   },
-  "yolov5": {
-        "model_path": "" ,
-        "confidence_threshold": 0.5,
-        "iou_threshold": 0.45
-    },
-     "yolov8": {
-        "model_path": "",
-        "confidence_threshold": 0.5,
-        "iou_threshold": 0.45
-        }
+  "yolov8": {
+    "model_path": "models/yolov8x.pt",
+    "confidence_threshold": 0.5,
+    "iou_threshold": 0.45
+  },
+  "faster_rcnn": {
+    "model_path": ""
+  }
 }

@@ -15,19 +15,20 @@ class RegionDetector:
         self.check_type = check_type or "default"# Determine model type from config or use the provided model_type as default
         self.detection_params = self._load_detection_params()
         self.model_type = self.detection_params.get(self.check_type, {}).get("model", model_type)
-        
         self.regions_config = self._load_regions_config()
-        self.model = None       
-        
-        self.yolov5_model_path = self.detection_params.get(
-            "model_path", "yolov5s.pt")
+
+        self.model = None
+        self.yolo_model = None  # For YOLO models
+        self.faster_rcnn_model = None  # For Faster R-CNN model
+
         # Load the model if specified
-        if self.model_type == "yolov5":
-            self.model = self._load_yolov5_model(self.yolov5_model_path)
-        elif self.model_type == "yolov8":
-            self.model = self._load_yolov8_model()
-        elif self.model_type == "faster_rcnn":
-            self.model = self._load_faster_rcnn_model()
+        if self.model_type == "yolov8":
+            self.yolo_model = self._load_yolov8_model()
+        elif self.model_type == "faster_rcnn" :
+            self.faster_rcnn_model = self._load_faster_rcnn_model()
+        elif self.model_type == "hybrid":
+            self.yolo_model = self._load_yolo_model()
+            self.faster_rcnn_model = self._load_faster_rcnn_model()
         elif self.model_type == "efficientdet":
             self.model = self._load_efficientdet_model()
 
@@ -48,16 +49,12 @@ class RegionDetector:
             'written_amount': {'x1': 0.05, 'x2': 0.75, 'y1': 0.35, 'y2': 0.45}
         }
 
-    def _load_model(self, model_type):
-        if model_type == 'yolov8':
+    def _load_yolo_model(self):
+        if self.model_type == "yolov8":
             return self._load_yolov8_model()
-        elif model_type == "faster_rcnn":
-            return self._load_faster_rcnn_model()
-        elif model_type == "efficientdet":
-            return self._load_efficientdet_model()
         else:
-            raise ValueError(f"Unsupported model type: {model_type}")
-
+            raise ValueError(f"Unsupported model type: {self.model_type}")
+    
     def _load_yolov5_model(self, path):
         print(f"Loading YOLOv5 model from {path}")
         try:
@@ -65,14 +62,18 @@ class RegionDetector:
         except Exception as e:
             print(f"Error loading YOLOv5 model: {e}")
             return None
+        else:
+            return None
 
     def _load_faster_rcnn_model(self):
-        print("Loading Faster R-CNN model")
+        print(f"Loading Faster R-CNN model ")
         try:
             model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
+                # If you have a CUDA-enabled GPU, move the model to the GPU
+            if torch.cuda.is_available():
+               model.cuda()
             model.eval()  # Set the model to evaluation mode
-
-            return model
+            return model 
         except Exception as e:
             print(f"Error loading Faster R-CNN model: {e}")
             return None
@@ -86,16 +87,21 @@ class RegionDetector:
         try:
             print("Running Faster R-CNN model")
             device = next(model.parameters()).device
-            image_tensor = torch.from_numpy(image).permute(
-                2, 0, 1).float().to(device) / 255.0
-
-            with torch.no_grad():
-                predictions = model([image_tensor])
-            regions = {}
-            for box, label, score in zip(predictions[0]["boxes"], predictions[0]["labels"],
-                                         predictions[0]["scores"]):
-                if score > 0.7:
-                    regions[f"class_{label.item()}"] = tuple(map(int, box.tolist()))
+            image_tensor = torch.from_numpy(image).permute(2, 0, 1).float().to(device) / 255.0
+            
+            # Faster R-CNN expects a list of tensors
+            predictions = model([image_tensor])  
+            
+            # Extract bounding boxes, labels, and scores from the predictions
+            boxes = predictions[0]['boxes'].cpu().detach().numpy()
+            labels = predictions[0]['labels'].cpu().detach().numpy()
+            scores = predictions[0]['scores'].cpu().detach().numpy()
+            
+            regions = []
+            for i in range(len(boxes)):
+                 box = boxes[i]
+                 score = scores[i]
+                 regions.append({'xmin': box[0],'ymin': box[1],'xmax': box[2],'ymax': box[3],'confidence': score})
             return regions
         except Exception as e:
             print(f"Error during Faster R-CNN inference: {e}")
@@ -109,20 +115,12 @@ class RegionDetector:
             results = model(image)
             # Process YOLOv5 results to extract region data
             regions = {}
-            for *xyxy, conf, cls in results.pred[0]:
-                x1, y1, x2, y2 = map(int, xyxy)
-
-                # Map class labels to region names (adjust as needed based on your model)
+            for *xyxy, conf, cls in results.pred[0]:  
+                x1, y1, x2, y2 = map(int, xyxy) 
                 class_name = model.names[int(cls)]
-                if class_name == "micr":
-                    region_name = "micr_line"
-                elif class_name == "amount":
-                    region_name = "amount_box"
-                elif class_name == "payee":
-                    region_name = "payee_line"
-                else:
-                    region_name = class_name  # Use class name if no specific mapping
-                regions[region_name] = (x1, y1, x2, y2)
+                regions.append({'xmin': x1,'ymin': y1,'xmax': x2,'ymax': y2,'confidence': conf, 'class': class_name})
+        
+
             return regions
         except Exception as e:
             print(f"Error during YOLOv5 inference: {e}")
@@ -130,7 +128,7 @@ class RegionDetector:
 
     def _load_yolov8_model(self):
         print(f"Loading YOLOv8 model")
-        try:
+        try: 
             return torch.hub.load("ultralytics/yolov8", "yolov8s",force_reload=True)
         except Exception as e:
             print(f"Error loading YOLOv8 model: {e}")
@@ -141,10 +139,11 @@ class RegionDetector:
             return {}
         try:
             print("Running YOLOv8 model")
-            results = model(image)
-            regions = {} 
-            for *xyxy, conf, cls in results.pred[0]:
-                x1, y1, x2, y2 = map(int, xyxy)
+            results = model(image) 
+            regions = []
+            for *xyxy, conf, cls in results.pred[0]: 
+                x1, y1, x2, y2 = map(int, xyxy) 
+                
                 class_name = model.names[int(cls)]
                 region_name = class_name if class_name in self.regions_config else class_name
                 regions[region_name] = (x1, y1, x2, y2)
@@ -199,6 +198,56 @@ class RegionDetector:
             return params
         return {}
 
+
+    def _compare_and_combine(self, yolo_results, faster_rcnn_results):
+        print("Comparing and combining YOLOv8 and Faster R-CNN results...")
+
+        combined_results = []
+
+        # 1. Group detections by type (MICR, amount, etc.) - Assuming a 'class' or similar field
+        yolo_by_type = {}
+        faster_rcnn_by_type = {}
+
+        for det in yolo_results:
+            det_type = det.get('class')  # Adjust if your class label field is different
+            if det_type:
+                yolo_by_type.setdefault(det_type, []).append(det)
+
+        for det in faster_rcnn_results:
+            det_type = det.get('class')
+            if det_type:
+                faster_rcnn_by_type.setdefault(det_type, []).append(det)
+
+        # 2. Iterate through expected detection types and compare
+        expected_types = set(yolo_by_type.keys()).union(faster_rcnn_by_type.keys())
+
+        for det_type in expected_types:
+            yolo_dets = yolo_by_type.get(det_type, [])
+            faster_rcnn_dets = faster_rcnn_by_type.get(det_type, [])
+
+            if not yolo_dets:
+                combined_results.extend(faster_rcnn_dets)
+            elif not faster_rcnn_dets:
+                combined_results.extend(yolo_dets)
+            else:
+                # Prioritize based on confidence and agreement (example)
+                best_yolo = max(yolo_dets, key=lambda x: x.get('confidence', 0))
+                best_faster_rcnn = max(faster_rcnn_dets, key=lambda x: x.get('confidence', 0))
+
+                if best_yolo['confidence'] > best_faster_rcnn['confidence'] * 1.1:  # 10% confidence boost
+                    combined_results.append(best_yolo)
+                elif best_faster_rcnn['confidence'] > best_yolo['confidence'] * 1.1:
+                    combined_results.append(best_faster_rcnn)
+                else:
+                    # If confidences are similar, favor Faster R-CNN (adjust as needed)
+                    combined_results.append(best_faster_rcnn)
+
+        return combined_results
+    
+    def detect(self, image):
+        if self.model_type == "hybrid":
+            return self._compare_and_combine(self._run_yolo_model(self.yolo_model, image), self._run_faster_rcnn_model(self.faster_rcnn_model, image))
+        elif self.model_type == "faster_rcnn":
     def _detect_contours(self, image):
         blurred = cv2.GaussianBlur(image, (5, 5), 0)
         edges = cv2.Canny(blurred, 50, 150)
@@ -246,10 +295,13 @@ class RegionDetector:
                 regions[name] = image[y1:y2, x1:x2]
 
         elif method == "yolov5":
-            if self.model is None:
-                raise ValueError(f"Model {method} not loaded.")
-            detected_regions = self._run_yolov5_model(self.model, image)
-            for name, coords in detected_regions.items():
+              if self.model is None:
+                  raise ValueError(f"Model {method} not loaded.")
+              detected_regions = self._run_yolov5_model(self.yolo_model, image)
+              for region in detected_regions:
+                  name = region['class']
+                  x1, y1, x2, y2 = region['xmin'], region['ymin'], region['xmax'], region['ymax']
+                  
                 x1, y1, x2, y2 = coords
                 regions[name] = image[y1:y2, x1:x2]
         elif method == "yolov8":
@@ -263,14 +315,19 @@ class RegionDetector:
         elif method == "efficientdet":
              if self.model is None:
                 raise ValueError(f"Model {method} not loaded.")
-             detected_regions = self._run_efficientdet_model(self.model, image)
+             detected_regions = self._run_efficientdet_model(self.yolo_model, image)
              for name, coords in detected_regions.items():
                 x1, y1, x2, y2 = coords
                 regions[name] = image[y1:y2, x1:x2]
         elif method == "faster_rcnn" :
-            detected_regions = self._run_faster_rcnn_model(self.model, image)
-            for name, coords in detected_regions.items():
-                 x1, y1, x2, y2 = coords
+            detected_regions = self._run_faster_rcnn_model(self.faster_rcnn_model, image)
+            for region in detected_regions:
+                 x1, y1, x2, y2 = region['xmin'], region['ymin'], region['xmax'], region['ymax']
+
+                 x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+                 name = "faster_rcnn_detected"
+                
+                 
                  regions[name] = image[y1:y2, x1:y2]
         
         elif method == "efficientdet":
@@ -296,3 +353,5 @@ class RegionDetector:
                     regions[name] = image[y1:y2, x1:x2]
 
         return regions
+        else:
+            return self._run_faster_rcnn_model(self.faster_rcnn_model, image)
