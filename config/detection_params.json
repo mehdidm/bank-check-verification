@@ -1,73 +1,16 @@
 {
-    "default": {
-        "model": "dynamic",
-        "preprocessing": {
-            "adaptive_threshold": true,
-            "clahe": true,
-            "denoise": true,
-            "sharpen": true
-        },
-
-        "ocr_settings": {
-            "contrast_ths": 0.2,
-            "text_threshold": 0.6,
-            "low_text": 0.3,
-            "width_ths": 0.7,
-            "mag_ratio": 2.0
-        }
-    },
+  "default": {
     "text_recognition": {
-        "model": "tesseract",
-        "language": "en",
-        "tesseract": {
-        },
-        "trocr": {
-        },
-        "crnn": {
-            "model_path": "",
-            "language_models": {
-                "fr": "",
-                "ar": ""
-            }
-        },
-        "donut": {
-            "model_path": "",
-            "language_models": {
-                "fr": "",
-                "ar": ""
-            }
-        },
-        "m4c": {
-            "model_path": "",
-            "language_models": {
-                "fr": "",
-                "ar": ""
-            }
-        },
-    "yolov5": {
+    }
+  },
+  "yolov5": {
         "model_path": "" ,
         "confidence_threshold": 0.5,
         "iou_threshold": 0.45
     },
-    "yolov8": {
+     "yolov8": {
         "model_path": "",
         "confidence_threshold": 0.5,
         "iou_threshold": 0.45
-    },
-    "faster_rcnn": {
-        "model_path": "",
-        "confidence_threshold": 0.5
-    },
-    "efficientdet": {
-        "model_path": "",
-        "confidence_threshold": 0.5
-    },
-        "gmr": {
-            "model_path": "",
-            "language_models": {
-                "fr": "",
-                "ar": ""
-            }
         }
-    }
-    }
+}
