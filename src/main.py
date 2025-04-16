@@ -25,7 +25,7 @@ class CheckExtractor:
     Main class for the check data extraction pipeline.
     """
     
-    def __init__(self, config_dir=None, output_dir=None, use_transformer=False, detection_params_path=None, check_type=None):
+    def __init__(self, config_dir=None, output_dir=None, use_transformer=False, detection_params_path=None, check_type=None, text_model='tesseract', text_language='english'):
         """
         Initialize the check extraction pipeline.
         
@@ -34,6 +34,8 @@ class CheckExtractor:
             output_dir (str, optional): Directory for output files.
             use_transformer (bool): Whether to use transformer-based OCR.
             detection_params_path (str, optional): Path to detection parameters file.
+            text_model (str): The model to use for text recognition
+            text_language (str): the language used for the model 
             check_type (str, optional): Type of check to use specific parameters.
         """
         # Set up configuration paths
@@ -63,6 +65,8 @@ class CheckExtractor:
             detection_params_path=self.detection_params_path,
             check_type=self.check_type
         )
+        self.text_model = text_model
+        self.text_language = text_language
         self.text_recognizer = TextRecognizer(
             use_transformer=use_transformer,
             detection_params_path=self.detection_params_path,
@@ -73,14 +77,16 @@ class CheckExtractor:
         
     def process_check(self, image_path, preprocessing_params=None, region_method='dynamic'):
         """
-        Process a single check image.
-        
-        Args:
-            image_path (str): Path to the check image.
-            preprocessing_params (dict, optional): Parameters for preprocessing.
-            region_method (str): Method for region extraction ('fixed' or 'dynamic').
-            
-        Returns:
+         Process a single check image.
+
+         Args:
+             image_path (str): Path to the check image.
+             preprocessing_params (dict, optional): Parameters for preprocessing.
+             region_method (str): Method for region extraction ('fixed' or 'dynamic').
+             model(str, optional): model to use for text recognition
+             language(str, optional): language used by the model
+
+         Returns:
             dict: Extraction results.
         """
         self.logger.info(f"Processing check: {image_path}")

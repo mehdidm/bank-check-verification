@@ -64,7 +64,7 @@ class CheckExtractorGUI:
                 text_language=self.language_var.get().lower()
             )
 
-            self.status_var.set("Extractor initialized successfully.")
+            self.status_var.set("Extractor initialized successfully.")            
         except Exception as e:
             self.status_var.set(f"Error initializing extractor: {e}")
             messagebox.showerror("Initialization Error", f"Failed to initialize check extractor: {e}")
@@ -139,7 +139,6 @@ class CheckExtractorGUI:
         ctk.CTkButton(parent, text="Process Check", command=self._process_check, fg_color="#1f77b4").pack(fill="x", pady=5)
         ctk.CTkButton(parent, text="Process Batch", command=self._process_batch, fg_color="#ff7f0e").pack(fill="x", pady=5)
         ctk.CTkButton(parent, text="Update Settings", command=self._update_settings, fg_color="#2ca02c").pack(fill="x", pady=5)
-        ctk.CTkButton(parent, text="Evaluate Models", command=self._evaluate_models).pack(fill="x", pady=5)
 
         self.status_var = ctk.StringVar(value="Ready")
         ctk.CTkLabel(parent, textvariable=self.status_var).pack(pady=10)
