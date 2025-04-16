@@ -81,6 +81,7 @@ class CheckExtractorGUI:
         right_panel.pack(side="right", fill="both", expand=True)
 
         self._create_left_panel_widgets(left_panel)
+
         self._create_right_panel_widgets(right_panel)
 
     def _create_left_panel_widgets(self, parent):
@@ -125,11 +126,13 @@ class CheckExtractorGUI:
         ctk.CTkOptionMenu(settings_frame, variable=self.threshold_var, values=["adaptive", "otsu", "none"]).pack(fill="x", padx=5, pady=2)
 
         ctk.CTkLabel(settings_frame, text="Text Recognition Model:").pack(anchor="w", padx=5, pady=2)        
-        self.model_var = ctk.StringVar(value="tesseract")
         self.model_options = ["Tesseract", "TrOCR", "CRNN", "Donut", "M4C", "GMR"]
+        self.model_var = ctk.StringVar(value=self.model_options[0])
         ctk.CTkOptionMenu(settings_frame, variable=self.model_var, values=self.model_options).pack(fill="x", padx=5, pady=2)
 
-        ctk.CTkLabel(settings_frame, text="Language:").pack(anchor="w", padx=5, pady=2)
+
+        ctk.CTkLabel(settings_frame, text="Language:").pack(anchor="w", padx=5, pady=2)        
+
         self.language_var = ctk.StringVar(value="English")
         self.language_options = ["English", "French", "Arabic"]
         ctk.CTkOptionMenu(settings_frame, variable=self.language_var, values=self.language_options).pack(fill="x", padx=5, pady=2)
