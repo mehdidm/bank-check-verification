@@ -28,14 +28,14 @@ class CheckExtractor:
     def __init__(self, config_dir=None, output_dir=None, use_transformer=False, detection_params_path=None, check_type=None, text_model='tesseract', text_language='english'):
         """
         Initialize the check extraction pipeline.
-        
+
         Args:
             config_dir (str, optional): Directory containing configuration files.
             output_dir (str, optional): Directory for output files.
             use_transformer (bool): Whether to use transformer-based OCR.
             detection_params_path (str, optional): Path to detection parameters file.
             text_model (str): The model to use for text recognition
-            text_language (str): the language used for the model 
+            text_language (str): the language used for the model
             check_type (str, optional): Type of check to use specific parameters.
         """
         # Set up configuration paths
@@ -44,16 +44,18 @@ class CheckExtractor:
         self.patterns_config_path = os.path.join(self.config_dir, 'extraction_patterns.json')
         
         # Detection parameters
-        self.detection_params_path = detection_params_path or os.path.join(self.config_dir, 'detection_params.json')
+        self.detection_params_path = detection_params_path or os.path.join(
+            self.config_dir, os.path.basename('detection_params.json')
+        )
         self.check_type = check_type or "default"
-        
+
         # Create output directory
         self.output_dir = output_dir or create_output_directory()
         
         # Set up logging
         setup_logging(os.path.join(self.output_dir, 'extraction.log'))
         self.logger = logging.getLogger('check_extractor.main')
-        
+
         # Initialize pipeline components
         self.logger.info("Initializing check extraction pipeline")
         self.preprocessor = ImagePreprocessor(
@@ -71,7 +73,7 @@ class CheckExtractor:
             use_transformer=use_transformer,
             detection_params_path=self.detection_params_path,
             check_type=self.check_type
-        )
+        )        
         self.data_extractor = DataExtractor(patterns_config_path=self.patterns_config_path)
         self.visualizer = ResultVisualizer(output_dir=self.output_dir)
         
@@ -110,12 +112,12 @@ class CheckExtractor:
                 threshold_method=preprocessing_params['threshold_method'],
                 enhance=preprocessing_params['enhance']
             )
-            
+
             # Extract regions
             self.logger.info(f"Extracting regions using {region_method} method")
             regions = self.region_detector.extract_regions(processed, method=region_method)
-            
-            # Extract text from regions
+
+            # Extract text from region
             self.logger.info("Performing OCR on regions")
             text_data = self.text_recognizer.extract_all_text(regions)
             
@@ -138,7 +140,7 @@ class CheckExtractor:
                 'written_amount': self.data_extractor.extract_written_amount(written_amount_text),
                 'raw_text': text_data  # Store all raw OCR text
             }
-            
+
             # Calculate confidence score
             confidence = calculate_confidence(extracted_data)
             extracted_data['confidence'] = round(confidence * 100, 2)
@@ -165,7 +167,7 @@ class CheckExtractor:
                 self.output_dir, 
                 f"{os.path.basename(image_path).split('.')[0]}_data.json"
             )
-            
+
             # Create a copy of extracted data without raw text for JSON
             json_data = {k: v for k, v in extracted_data.items() if k != 'raw_text'}
             json_data['image_path'] = image_path
@@ -173,9 +175,9 @@ class CheckExtractor:
             
             with open(results_path, 'w') as f:
                 json.dump(json_data, f, indent=4)
-            
+
             self.logger.info(f"Results saved to {self.output_dir}")
-            
+
             return {
                 'extracted_data': extracted_data,
                 'visualization_path': vis_path,
@@ -184,7 +186,7 @@ class CheckExtractor:
             }
             
         except Exception as e:
-            self.logger.error(f"Error processing check {image_path}: {e}", exc_info=True)
+                self.logger.error(f"Error processing check {image_path}: {e}", exc_info=True)
             return {'error': str(e)}
     
     def batch_process(self, image_dir, preprocessing_params=None, region_method='dynamic'):
