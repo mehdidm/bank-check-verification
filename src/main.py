@@ -77,7 +77,7 @@ class CheckExtractor:
         self.data_extractor = DataExtractor(patterns_config_path=self.patterns_config_path)
         self.visualizer = ResultVisualizer(output_dir=self.output_dir)
         
-    def process_check(self, image_path, preprocessing_params=None, region_method='dynamic'):
+    def process_check(self, image_path, preprocessing_params=None, region_method='dynamic', model=None, language=None):
         """
          Process a single check image.
 
