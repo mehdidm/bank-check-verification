@@ -49,7 +49,8 @@ class TextRecognizer:
             self.text_recognition_params = {}
 
         self.trocr_processor = None
-        self.trocr_model = None        self.crnn_model = None
+        self.trocr_model = None;        
+        self.crnn_model = None
         self.donut_model = None
         self.donut_processor = None
         self.m4c_model = None
