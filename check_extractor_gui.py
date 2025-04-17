@@ -93,7 +93,7 @@ class CheckExtractorGUI:
         self.image_path_var = ctk.StringVar()
         image_entry = ctk.CTkEntry(input_frame, textvariable=self.image_path_var)
         image_entry.pack(fill="x", padx=5, pady=2)
-        ctk.CTkButton(input_frame, text="Browse", command=self._browse_image).pack(pady=5)
+        ctk.CTkButton(input_frame, text="Upload and Process", command=self._browse_and_process).pack(pady=5)
 
         ctk.CTkLabel(input_frame, text="Batch Directory (Optional):").pack(anchor="w", padx=5, pady=2)
         self.batch_path_var = ctk.StringVar()
@@ -139,7 +139,6 @@ class CheckExtractorGUI:
 
         # Action Buttons
         ctk.CTkButton(parent, text="Evaluate Models", command=self._evaluate_models).pack(fill="x", pady=5)
-        ctk.CTkButton(parent, text="Process Check", command=self._process_check, fg_color="#1f77b4").pack(fill="x", pady=5)
         ctk.CTkButton(parent, text="Process Batch", command=self._process_batch, fg_color="#ff7f0e").pack(fill="x", pady=5)
         ctk.CTkButton(parent, text="Update Settings", command=self._update_settings, fg_color="#2ca02c").pack(fill="x", pady=5)
 
@@ -157,10 +156,16 @@ class CheckExtractorGUI:
         self.output_text.pack(fill="x", pady=10)
         self.image_ref = None
 
-    def _browse_image(self):
+    def _browse_and_process(self):
         file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.jpeg *.png *.bmp *.tif *.tiff")])
         if file_path:
             self.image_path_var.set(file_path)
+            self._load_image(file_path)  # Keep loading image for display
+            self._process_check()  # Immediately process the check
+
+    def _browse_image(self):
+        file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.jpeg *.png *.bmp *.tif *.tiff")])
+        if file_path:
             self._load_image(file_path)
 
     def _browse_batch_dir(self):
