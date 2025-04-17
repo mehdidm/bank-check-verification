@@ -302,9 +302,9 @@ class RegionDetector:
               for region in detected_regions:
                   name = region['class']
                   x1, y1, x2, y2 = region['xmin'], region['ymin'], region['xmax'], region['ymax']
+                  x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
                   
-                x1, y1, x2, y2 = coords
-                regions[name] = image[y1:y2, x1:x2]
+                  regions[name] = image[y1:y2, x1:x2]
         elif method == "yolov8":
             if self.model is None:
                 raise ValueError(f"Model {method} not loaded.")
