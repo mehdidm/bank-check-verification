@@ -267,18 +267,17 @@ class TextRecognizer:
     def _compare_and_combine_ocr(self, trocr_output, donut_output, region_type):
         print(f"Comparing TrOCR and Donut outputs for region type : {region_type}")
         if trocr_output == donut_output:
-            return trocr_output
-        else:        
-            if len(trocr_output)> len(donut_output):
-                return trocr_output
-            else:
-            print(f"Running CRNN model with language : {self.language}")
-            # Perform CRNN inference on the region using the loaded model
-            text = ...  # Perform inference and get recognized text
-            return text.strip()
-        except Exception as e:
-            print(f"Error during CRNN inference: {e}")
-            return ""
+           return trocr_output
+        else:
+            try:
+                if len(trocr_output) > len(donut_output):
+                    return trocr_output
+                else:
+                    return donut_output
+            except Exception as e:
+                print(f"Error during _compare_and_combine_ocr : {e}")
+                return ""
+
     def _run_m4c_model(self, model, region, language):
         if model is None:
             return ""
