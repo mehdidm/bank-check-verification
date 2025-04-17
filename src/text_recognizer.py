@@ -230,9 +230,12 @@ class TextRecognizer:
                 )
                 text = self.donut_processor.batch_decode(outputs.sequences)[0].replace(self.donut_processor.tokenizer.eos_token, "").replace(self.donut_processor.tokenizer.pad_token, "")
                 return text.strip()
+            except Exception as e:
+                print(f"Error during inner Donut inference: {e}")
+                return "" 
         except Exception as e:
             print(f"Error during Donut inference: {e}")
-            return ""
+            return ""        
 
         # 2. Check for Agreement
         if trocr_output == donut_output:
