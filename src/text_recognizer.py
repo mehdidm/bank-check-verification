@@ -218,7 +218,6 @@ class TextRecognizer:
                 num_beams=1,
                 bad_words_ids=[[self.donut_processor.tokenizer.unk_token_id]],
                 return_dict_in_generate=True,
-                decoder_input_ids=decoder_input_ids.to(self.donut_model.device),
                 max_length=self.donut_model.decoder.config.max_position_embeddings,
                 early_stopping=True,
                 pad_token_id=self.donut_processor.tokenizer.pad_token_id,
