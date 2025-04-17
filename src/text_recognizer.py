@@ -210,14 +210,10 @@ class TextRecognizer:
                 ).input_ids.to(self.donut_model.device)
 
                 outputs = self.donut_model.generate(pixel_values,
-                decoder_input_ids=decoder_input_ids,
-                max_length=512,
+                decoder_input_ids=decoder_input_ids,                max_length=512,
                 eos_token_id=self.donut_processor.tokenizer.eos_token_id,
                 use_cache=True,
-                num_beams=1,
                 bad_words_ids=[[self.donut_processor.tokenizer.unk_token_id]],
-                return_dict_in_generate=True,
-                early_stopping=True,
                 pad_token_id=self.donut_processor.tokenizer.pad_token_id,
                 eos_token_id=self.donut_processor.tokenizer.eos_token_id,
                 use_cache=True,
