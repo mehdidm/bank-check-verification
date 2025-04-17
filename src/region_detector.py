@@ -263,9 +263,11 @@ class RegionDetector:
               if self.model is None:
                   raise ValueError(f"Model {method} not loaded.")
               detected_regions = self._run_yolov5_model(self.yolo_model, image)
-              for region in detected_regions:\n                 name = region['class']\n                 x1, y1, x2, y2 = region['xmin'], region['ymin'], region['xmax'], region['ymax']\n                 x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-                  
-                  regions[name] = image[y1:y2, x1:x2]
+              for region in detected_regions:
+                 name = region['class']
+                 x1, y1, x2, y2 = region['xmin'], region['ymin'], region['xmax'], region['ymax']
+                 x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+                 regions[name] = image[y1:y2, x1:x2]
         elif method == "yolov8":
             if self.model is None:
                 raise ValueError(f"Model {method} not loaded.")
