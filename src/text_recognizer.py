@@ -8,7 +8,7 @@ import json
 from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 from typing import Dict
 
-from transformers import DonutProcessor, VisionEncoderDecoderForCausalLM
+from transformers import DonutProcessor, VisionEncoderDecoderModel
 
 class TextRecognizer:
 
@@ -77,10 +77,10 @@ class TextRecognizer:
             except Exception as e:
                 print(f"Error loading transformer OCR model: {e}")
                 self.use_transformer = False
-        try:
+        try:    
             self.donut_processor = DonutProcessor.from_pretrained("naver-clova-ix/donut-base-finetuned-cord-v2")
             self.donut_model = VisionEncoderDecoderModel.from_pretrained("naver-clova-ix/donut-base-finetuned-cord-v2")
-            print("Donut model loaded successfully.").to("cuda")
+            print("Donut model loaded successfully.")
         except Exception as e:
             print(f"Error loading Donut model: {e}")
             self.use_transformer = False
@@ -201,14 +201,17 @@ class TextRecognizer:
             try:
                 pil_img = self.preprocess_region(region)
                 pixel_values = self.donut_processor(pil_img, return_tensors="pt").pixel_values.to(self.donut_model.device)
-
+                # Determine the device of the model and move data to the same device
+                device = next(self.donut_model.parameters()).device
+                pixel_values = pixel_values.to(device)
                 task_prompt = "<s_cord-v2>"
                 decoder_input_ids = self.donut_processor.tokenizer(
                     task_prompt,
                     add_special_tokens=False,
                     return_tensors="pt"
-                ).input_ids.to(self.donut_model.device)
-
+                ).input_ids.to(device)
+                
+                
                 outputs = self.donut_model.generate(pixel_values,
                 decoder_input_ids=decoder_input_ids,                max_length=512,
                 eos_token_id=self.donut_processor.tokenizer.eos_token_id,
