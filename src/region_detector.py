@@ -4,8 +4,7 @@ from typing import Dict
 import cv2
 from typing import Dict
 import numpy as np
-import torch
-from sklearn.cluster import KMeans
+import torch 
 import torchvision
 
 class RegionDetector:
@@ -249,41 +248,6 @@ class RegionDetector:
             return self._compare_and_combine(self._run_yolo_model(self.yolo_model, image), self._run_faster_rcnn_model(self.faster_rcnn_model, image))
         elif self.model_type == "faster_rcnn":            
             return self._run_faster_rcnn_model(self.faster_rcnn_model, image)
-    def _detect_contours(self, image):
-        blurred = cv2.GaussianBlur(image, (5, 5), 0)
-        edges = cv2.Canny(blurred, 50, 150)
-        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        return contours
-
-    def _classify_regions(self, contours, image_shape):
-        h, w = image_shape
-        features = []
-        for contour in contours:
-            x, y, w_contour, h_contour = cv2.boundingRect(contour)
-            area = cv2.contourArea(contour)
-            features.append([x/w, y/h, w_contour/w, h_contour/h, area/(w*h)])
-
-        if not features:
-            return {}
-
-        kmeans = KMeans(n_clusters=min(5, len(features)), random_state=42)
-        labels = kmeans.fit_predict(features)
-
-        regions = {}
-        for i, (contour, label) in enumerate(zip(contours, labels)):
-            x, y, w_contour, h_contour = cv2.boundingRect(contour)
-            if label == 0:  # MICR line (bottom
-                regions['micr_line'] = (x, y, x + w_contour, y + h_contour)
-            elif label == 1:  # Amount box (top-right)
-                regions['amount_box'] = (x, y, x + w_contour, y + h_contour)
-            elif label == 2:  # Payee line (left-middle)
-                regions['payee_line'] = (x, y, x + w_contour, y + h_contour)
-            elif label == 3:  # Date line (top-right)
-                regions['date_line'] = (x, y, x + w_contour, y + h_contour)
-            elif label == 4:  # Written amount (middle)
-                regions['written_amount'] = (x, y, x + w_contour, y + h_contour)
-        return regions
-
     def extract_regions(self, image, method=None) -> Dict[str, np.ndarray]:
         h, w = image.shape[:2]
         regions = {}
@@ -299,10 +263,7 @@ class RegionDetector:
               if self.model is None:
                   raise ValueError(f"Model {method} not loaded.")
               detected_regions = self._run_yolov5_model(self.yolo_model, image)
-              for region in detected_regions:
-                  name = region['class']
-                  x1, y1, x2, y2 = region['xmin'], region['ymin'], region['xmax'], region['ymax']
-                  x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+              for region in detected_regions:\n                 name = region['class']\n                 x1, y1, x2, y2 = region['xmin'], region['ymin'], region['xmax'], region['ymax']\n                 x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
                   
                   regions[name] = image[y1:y2, x1:x2]
         elif method == "yolov8":
@@ -338,21 +299,7 @@ class RegionDetector:
             if self.model is None:
                 raise ValueError(f"Model {self.model_type} not loaded.")
             detected_regions = self._run_yolov5_model(self.model, image)
-            for name, coords in detected_regions.items():
-                x1, y1, x2, y2 = coords
-                regions[name] = image[y1:y2, x1:x2]
-        else:  # dynamic method == 'dynamic'
-            contours = self._detect_contours(image)
-            detected_regions = self._classify_regions(contours, (h, w))
-            for name in self.regions_config:
-                if name in detected_regions:
-                    x1, y1, x2, y2 = detected_regions[name]
-                    regions[name] = image[y1:y2, x1:x2]
-                else:
-                    x1, x2 = int(w * self.regions_config[name]["x1"]), int(w * self.regions_config[name]["x2"])
-                    y1, y2 = int(h * self.regions_config[name]["y1"]), int(h * self.regions_config[name]["y2"])
-                    regions[name] = image[y1:y2, x1:x2]
+          
 
         return regions
-       
 
