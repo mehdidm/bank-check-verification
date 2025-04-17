@@ -1,2 +1,3 @@
 tool_code
-.venv
+venv/
+models/
